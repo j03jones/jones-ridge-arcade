@@ -16,6 +16,7 @@ const GAMES = {
   nova:  { key: 'top10:nova', maxScore: 9000000 },
   pin:   { key: 'top10:pin', maxScore: 500000000 },
   rush:  { key: 'top10:rush', maxScore: 20000000 },
+  hero:  { key: 'top10:hero', maxScore: 50000000 },
 };
 
 const MAX_ENTRIES = 10;

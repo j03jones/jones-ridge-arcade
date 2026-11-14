@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Short Order Hero">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="/hero/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/hero-192.png">
+<link rel="apple-touch-icon" href="/icons/hero-180.png">
+<title>Short Order Hero</title>
+<style>
+  html,body { margin:0; position:fixed; inset:0; height:100%; background:#000; color:#ffe8f2; overflow:hidden; overscroll-behavior:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; touch-action:none; -webkit-user-select:none; user-select:none; }
+  #wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; box-sizing:border-box;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  canvas { display:block; background:#000; box-shadow:0 0 40px rgba(255,95,160,.25); }
+  #ini { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(12,2,8,.6); z-index:5; }
+  #ini[hidden] { display:none; }
+  #ini form { background:linear-gradient(rgba(60,16,44,.96),rgba(20,6,16,.97)); border:2px solid #ff7ab8; border-radius:20px; padding:24px 26px;
+    text-align:center; width:min(86vw,360px); box-sizing:border-box; box-shadow:0 0 40px rgba(255,95,160,.45); color:#fff0f6; }
+  #ini .t { font:900 26px system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:#ffd84a; }
+  #ini .s { font-weight:800; font-size:17px; margin:6px 0 16px; }
+  #ini label { display:block; font-weight:800; font-size:13px; letter-spacing:.08em; color:#ff9cc8; margin-bottom:8px; }
+  #ini input { width:4.6em; font:bold 40px "Courier New", monospace; text-align:center; letter-spacing:.3em; padding:6px 0 6px .3em;
+    text-transform:uppercase; background:#000; color:#fff; border:2px solid #ff9cc8; border-radius:10px; -webkit-user-select:text; user-select:text; }
+  #ini .row { display:flex; gap:10px; justify-content:center; margin-top:16px; }
+  #ini button { font:800 17px system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; padding:11px 20px; border-radius:22px; border:2px solid #ff9cc8; background:#c8285e; color:#fff; cursor:pointer; }
+  #ini button.alt { background:transparent; color:#ff9cc8; }
+  #ini button:disabled { opacity:.5; }
+  #ini .m { min-height:1.3em; margin-top:10px; color:#ff9a9a; font-size:13px; font-weight:bold; }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="c"></canvas></div>
+<div id="ini" hidden>
+  <form autocomplete="off">
+    <div class="t">NEW HIGH SCORE!</div>
+    <div class="s" id="iniScore"></div>
+    <label for="iniIn">ENTER YOUR INITIALS</label>
+    <input id="iniIn" maxlength="3" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="done">
+    <div class="row"><button type="submit" id="iniSave">SAVE</button><button type="button" class="alt" id="iniSkip">SKIP</button></div>
+    <div class="m" id="iniMsg"></div>
+  </form>
+</div>
+<script src="./game.js?v=20261113a"></script>
+</body>
+</html>
