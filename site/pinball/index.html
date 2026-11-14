@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Flipside Diner">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="/pinball/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/pinball-192.png">
+<link rel="apple-touch-icon" href="/icons/pinball-180.png">
+<title>Flipside Diner Pinball</title>
+<style>
+  html,body { margin:0; position:fixed; inset:0; height:100%; background:#000; color:#ffe9f4; overflow:hidden; overscroll-behavior:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; touch-action:none; -webkit-user-select:none; user-select:none; }
+  #wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; box-sizing:border-box;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  #stage { position:relative; box-shadow:0 0 40px rgba(255,80,170,.22); background:#05020a; }
+  #stage canvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  #loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:800; letter-spacing:.1em; color:#ffa6d6; padding:20px; }
+  #ini { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(10,0,12,.6); z-index:5; }
+  #ini[hidden] { display:none; }
+  #ini form { background:linear-gradient(rgba(70,20,70,.95),rgba(16,4,22,.96)); border:2px solid #ff5fb8; border-radius:20px; padding:24px 26px;
+    text-align:center; width:min(86vw,360px); box-sizing:border-box; box-shadow:0 0 40px rgba(255,95,184,.45); color:#fff0f8; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+  #ini .t { font:900 26px system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:#ffd84a; }
+  #ini .s { font-weight:800; font-size:17px; margin:6px 0 16px; }
+  #ini label { display:block; font-weight:800; font-size:13px; letter-spacing:.08em; color:#ffb3df; margin-bottom:8px; }
+  #ini input { width:4.6em; font:bold 40px "Courier New", monospace; text-align:center; letter-spacing:.3em; padding:6px 0 6px .3em;
+    text-transform:uppercase; background:#000; color:#fff; border:2px solid #ffb3df; border-radius:10px; -webkit-user-select:text; user-select:text; }
+  #ini .row { display:flex; gap:10px; justify-content:center; margin-top:16px; }
+  #ini button { font:800 17px system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; padding:11px 20px; border-radius:22px; border:2px solid #ffb3df; background:#c2287a; color:#fff; cursor:pointer; }
+  #ini button.alt { background:transparent; color:#ffb3df; }
+  #ini button:disabled { opacity:.5; }
+  #ini .m { min-height:1.3em; margin-top:10px; color:#ffb0a0; font-size:13px; font-weight:bold; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./lib/three.module.min.js", "three/addons/": "./lib/addons/" } }
+</script>
+</head>
+<body>
+<div id="wrap"><div id="stage"><canvas id="gl"></canvas><canvas id="ui"></canvas><div id="loading">WARMING UP THE GRILL&hellip;</div></div></div>
+<div id="ini" hidden>
+  <form autocomplete="off">
+    <div class="t">NEW HIGH SCORE!</div>
+    <div class="s" id="iniScore"></div>
+    <label for="iniIn">ENTER YOUR INITIALS</label>
+    <input id="iniIn" maxlength="3" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="done">
+    <div class="row"><button type="submit" id="iniSave">SAVE</button><button type="button" class="alt" id="iniSkip">SKIP</button></div>
+    <div class="m" id="iniMsg"></div>
+  </form>
+</div>
+<script type="module" src="./game.js?v=20261109a"></script>
+</body>
+</html>
