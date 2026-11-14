@@ -36,6 +36,14 @@
 </style>
 </head>
 <body>
+<div id="rotate" aria-live="polite"><style>
+  #rotate { display:none; position:fixed; inset:0; z-index:100; background:#05010f; color:#e9e4ff; align-items:center; justify-content:center;
+    flex-direction:column; gap:18px; text-align:center; font:800 18px system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; letter-spacing:.08em; }
+  #rotate .ph { width:38px; height:64px; border:4px solid #22f0ff; border-radius:9px; box-shadow:0 0 16px rgba(34,240,255,.6); animation:jrTurn 2s ease-in-out infinite; }
+  #rotate small { display:block; margin-top:6px; font-weight:600; font-size:13px; color:#8f86c9; letter-spacing:.04em; }
+  @keyframes jrTurn { 0%,25% { transform:rotate(-90deg); } 60%,100% { transform:rotate(0); } }
+  @media (orientation:landscape) and (pointer:coarse) and (max-height:520px) { #rotate { display:flex; } }
+</style><div class="ph"></div><div>TURN YOUR PHONE UPRIGHT<small>This game plays in portrait</small></div></div>
 <div id="wrap"><canvas id="c"></canvas></div>
 <div id="ini" hidden>
   <form autocomplete="off">
@@ -72,7 +80,8 @@ function fit() {
   let h = Math.round(clamp(W * ah / aw, 700, 1000));
   if (!IS_TOUCH) h = Math.min(h, 860);
   H = h;
-  dpr = Math.min(2, window.devicePixelRatio || 1);
+  // Render at the size the canvas is actually shown (times the screen density) so it stays sharp when scaled up.
+  dpr = Math.max(1, Math.min(3, Math.ceil(Math.min(aw / W, ah / H) * (window.devicePixelRatio || 1) * 4) / 4));
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   const k = Math.min(aw / W, ah / H);
   cv.style.width = Math.floor(W * k) + 'px'; cv.style.height = Math.floor(H * k) + 'px';
@@ -494,6 +503,11 @@ addEventListener('keyup', e => {
 });
 addEventListener('blur', () => { keys.up = keys.down = false; if (G.state === 'play') togglePause(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && G.state === 'play') togglePause(); });
+// Phones held sideways see the "turn your phone" screen above the game, so pause the game while it shows.
+const sideways = matchMedia('(orientation: landscape) and (pointer: coarse) and (max-height: 520px)');
+const onSideways = () => { if (sideways.matches && G.state === 'play') togglePause(); };
+if (sideways.addEventListener) sideways.addEventListener('change', onSideways); else sideways.addListener(onSideways);
+
 
 /* ---------------- drawing helpers ---------------- */
 function rr(x, y, w, h, r) {

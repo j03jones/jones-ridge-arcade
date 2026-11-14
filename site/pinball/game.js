@@ -752,12 +752,17 @@ addEventListener('keyup', e => {
 });
 addEventListener('blur', () => { FLIPPERS.forEach(f => f.pressed = false); if (G.state === 'play') togglePause(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && G.state === 'play') togglePause(); });
+// Phones held sideways see the "turn your phone" screen above the game, so pause the game while it shows.
+const sideways = matchMedia('(orientation: landscape) and (pointer: coarse) and (max-height: 520px)');
+const onSideways = () => { if (sideways.matches && G.state === 'play') togglePause(); };
+if (sideways.addEventListener) sideways.addEventListener('change', onSideways); else sideways.addListener(onSideways);
+
 
 /* ====================== 3D scene ====================== */
 const S = 0.1;   // world units per table unit
 const W3 = (x, y, h = 0) => new THREE.Vector3((x - TW / 2) * S, h, (y - TH / 2) * S);
 let renderer, scene, camera, composer, bloom, R3 = null;
-let quality = IS_TOUCH ? 1 : 2;
+let quality = 2; // drops automatically on devices that can't keep up
 function canvasTex(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); draw(g, w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; }
 function radialTex(rgb) { return canvasTex(128, 128, (g) => { const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, `rgba(${rgb},1)`); gr.addColorStop(0.25, `rgba(${rgb},.55)`); gr.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }); }
 

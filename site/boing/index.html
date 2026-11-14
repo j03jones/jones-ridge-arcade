@@ -64,7 +64,8 @@
 <script>
 (() => {
 'use strict';
-const W = 640, SS = 2;
+const W = 640;
+let SS = 2; // canvas pixels per game pixel; follows the on-screen size so the game stays sharp
 const IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 // Height adapts to the screen: 640x480 on desktop/landscape, taller in portrait so phones fill the screen.
 let H = 480, TALL = false, UI = 1, HUD_H = 24, TOP = 40, PAD_Y = 444, BH = 16;
@@ -82,7 +83,7 @@ function layout(newH) {
   BH = TALL ? Math.min(24, 16 + Math.round((H - 760) / 60)) : 16;
   TOP = HUD_H + 16 + (TALL ? Math.round((H - 480) * 0.12) : 0);
   PAD_Y = TALL ? H - Math.max(70, Math.round(H * 0.13)) : H - 36;
-  cv.width = W * SS; cv.height = H * SS;
+  cv.width = Math.round(W * SS); cv.height = Math.round(H * SS);
   ctx.setTransform(SS, 0, 0, SS, 0, 0);
 }
 let onLayout = () => {};
@@ -90,7 +91,9 @@ function fit() {
   const aw = wrap.clientWidth || innerWidth, ah = wrap.clientHeight || innerHeight;
   const aspect = ah / aw;
   const newH = aspect > 0.8 ? Math.round(Math.min(1400, W * aspect)) : 480;
-  if (newH !== H || cv.width !== W * SS) { layout(newH); onLayout(); }
+  const fitScale = Math.min(aw / W, ah / newH);
+  SS = Math.max(1, Math.min(3, Math.ceil(fitScale * (window.devicePixelRatio || 1) * 4) / 4));
+  if (newH !== H || cv.width !== Math.round(W * SS)) { layout(newH); onLayout(); }
   const s = Math.min(aw / W, ah / H);
   cv.style.width = Math.floor(W * s) + 'px';
   cv.style.height = Math.floor(H * s) + 'px';
