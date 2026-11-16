@@ -3,3 +3,13 @@ node_modules/
 .wrangler/
 .DS_Store
 .claude/
+
+dist/
+scratch/
+.env
+*.log
+.env.local
+.idea/
+.vscode/
+*.pem
+*.key
