@@ -877,6 +877,29 @@ function bumperCapTex() {
   });
   return _capTex;
 }
+function flipperDecalTex(upper) {
+  return canvasTex(512, 128, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#ff8cc4'); gr.addColorStop(0.5, '#e8327e'); gr.addColorStop(1, '#a8124f');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    // chequered diner band
+    for (let x = 0; x < w; x += 16) for (let r = 0; r < 2; r++) { g.fillStyle = ((x / 16 + r) % 2) ? '#ffffff' : '#1a0820'; g.fillRect(x, h - 22 + r * 8, 16, 8); }
+    // pinstripes
+    g.fillStyle = 'rgba(255,255,255,.85)'; g.fillRect(0, 10, w, 4); g.fillRect(0, h - 30, w, 3);
+    // pivot badge
+    const pg = g.createRadialGradient(56, 58, 4, 64, 64, 44); pg.addColorStop(0, '#ffffff'); pg.addColorStop(0.6, '#c9d2e6'); pg.addColorStop(1, '#6a7590');
+    g.fillStyle = pg; g.beginPath(); g.arc(64, 62, 40, 0, 7); g.fill();
+    g.fillStyle = '#ffd84a'; g.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 12 : 28, a = -Math.PI / 2 + i * Math.PI / 5; g.lineTo(64 + Math.cos(a) * r, 62 + Math.sin(a) * r); } g.closePath(); g.fill();
+    // script logo
+    g.save(); g.translate(300, 62); g.transform(1, 0, -0.25, 1, 0, 0);
+    g.font = `900 ${upper ? 54 : 60}px ${UI_FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.lineWidth = 10; g.strokeStyle = '#4a0a26'; g.strokeText(upper ? 'TO GO!' : 'FLIPSIDE', 0, 0);
+    g.fillStyle = '#fff6e0'; g.fillText(upper ? 'TO GO!' : 'FLIPSIDE', 0, 0);
+    g.restore();
+    // gloss
+    const sh = g.createLinearGradient(0, 0, 0, h * 0.5); sh.addColorStop(0, 'rgba(255,255,255,.35)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = sh; g.fillRect(0, 0, w, h * 0.5);
+  });
+}
 function addContactShadows(R) {
   const blob = radialTex('0,0,0');
   const strip = canvasTex(16, 64, (g) => { const gr = g.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.5, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 16, 64); });
@@ -1605,8 +1628,11 @@ function buildScene() {
     const decal = new THREE.Mesh(new THREE.CircleGeometry(1.95, 40), new THREE.MeshStandardMaterial({ map: bumperCapTex(), transparent: true, roughness: 0.3, emissive: 0xffffff, emissiveMap: bumperCapTex(), emissiveIntensity: 0.25 })); decal.rotation.x = -Math.PI / 2; decal.position.y = 2.51; g.add(decal);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(1.95, 0.16, 10, 32), M.chrome); ring.rotation.x = Math.PI / 2; ring.position.y = 1.0; g.add(ring);
     for (const sx of [-1, 1]) { const handle = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.3, 0.4), M.darkMetal); handle.position.set(sx * 2.4, 1.9, 0); g.add(handle); }
+    // LED ring around the base that flares with every hit
+    const ledMat = new THREE.MeshBasicMaterial({ color: 0xff2f8a, toneMapped: false });
+    const led = new THREE.Mesh(new THREE.TorusGeometry(2.42, 0.09, 8, 48), ledMat); led.rotation.x = Math.PI / 2; led.position.y = 0.7; g.add(led);
     scene.add(g);
-    return { g, capMat, ring };
+    return { g, capMat, ring, ledMat };
   });
   // grill toy with a burger on top
   {
@@ -1663,6 +1689,19 @@ function buildScene() {
     const rub = new THREE.Mesh(geo, M.redRubber); rub.scale.set(1.04, 0.35, 1.18); rub.position.y = 0.55;
     const g = new THREE.Group(); g.add(body, rub); g.position.copy(W3(f.x, f.y, 0.05));
     const cap = cyl(0.35, 0.35, 0.3, M.chrome, 12); cap.position.y = 1.75; g.add(cap);
+    // printed decal on the flipper's top face
+    {
+      const di = new THREE.Shape(), d0 = r0 * 0.8, d1 = r1 * 0.72;
+      di.absarc(0, 0, d0, Math.PI / 2, Math.PI * 1.5, false); di.lineTo(L, -d1); di.absarc(L, 0, d1, -Math.PI / 2, Math.PI / 2, false); di.closePath();
+      const dg = new THREE.ShapeGeometry(di, 24);
+      const uv = dg.attributes.uv, pos = dg.attributes.position;
+      for (let k = 0; k < uv.count; k++) uv.setXY(k, (pos.getX(k) + d0) / (L + d0 + d1), (pos.getY(k) + d0) / (2 * d0));
+      dg.rotateX(-Math.PI / 2);
+      const tex = flipperDecalTex(f.upper);
+      if (f.side) { tex.center.set(0.5, 0.5); tex.rotation = Math.PI; }
+      const decal = new THREE.Mesh(dg, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.28, metalness: 0.05, polygonOffset: true, polygonOffsetFactor: -2 }));
+      decal.position.y = 1.5 + 0.125; g.add(decal);
+    }
     scene.add(g); return g;
   });
   // ramps
@@ -1941,6 +1980,7 @@ function updateScene(dt) {
     if (G.rainbowT > 0) { const hue = (t * 3 + i / 3) % 1; const rgb = hslToRGB(hue, 1, 0.55); emC = (rgb[0] << 16) | (rgb[1] << 8) | rgb[2]; emI = Math.max(emI, 2.5 + Math.sin(t * 12) * 1.5); }
     bm.capMat.emissiveIntensity = emI;
     bm.capMat.emissive.set(emC);
+    bm.ledMat.color.set(emC).multiplyScalar(0.35 + Math.min(emI, 4) * 0.45);
     bm.ring.position.y = 1.0 - f * 0.6;
     R.sprites.bumpers[i].material.opacity = 0.15 + f * 0.9 + (siz ? 0.3 : 0) + (G.lightShowT > 0 || G.rainbowT > 0 ? 0.4 : 0);
   });

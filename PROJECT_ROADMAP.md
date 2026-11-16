@@ -1,16 +1,17 @@
 # Jones Ridge Arcade — Roadmap & Handoff
 
 **Last saved:** November 16, 2026 (Claude session)
-**Status:** All 9 games are in the arcade, and art polish is done for 5 of 6 games; **only Pinball is left**. Everything so far is pushed to `origin/main`, so it is live on Cloudflare Pages once the deploy workflow finishes.
+**Status:** ✅ Roadmap complete. All 9 games are in the arcade, all art polish is done, and everything is pushed and live at https://arcade-jrk.pages.dev.
 **Repository:** `/home/j03jones/Documents/jones-ridge-arcade` (all live files are in `site/`)
 
 ---
 
 ## Where to pick up
 
-1. **Pinball art polish** (`site/pinball/game.js`, the last item in Task 2 below).
+1. Nothing required is left. Ideas for later are listed under "Possible next steps" below.
 2. Optional: **update the Chomper lobby card** in `site/index.html`. It still shows a yellow Pac-Man-style wedge; the game and icon now use a lattice-crust pie with a chef's hat.
-3. **Deploy after further changes:** `git push origin main`. This runs `.github/workflows/deploy.yml` and publishes `site/` to Cloudflare Pages. Everything up to the Nova polish has been pushed.
+3. **Deploying:** `git push origin main` runs `.github/workflows/deploy.yml` and publishes `site/` to the `arcade-jrk` Pages project, but only when the push touches `site/` or the workflow. Don't bring back `setup-arcade.sh` or `wrangler publish`: commit `6841fb3` did that and broke deploys until `602eb1a` restored the working workflow.
+4. **Pinball caching:** `site/pinball/index.html` loads `game.js?v=YYYYMMDDx`. **Bump that version on every `game.js` change**, or browsers keep the old file.
 
 **How the work has been tested:** a local server (`python3 -m http.server 8787 --directory site`, saved as the `arcade` entry in `.claude/launch.json`) and the in-app browser at phone size (about 480×820).
 - The browser pane is often hidden, which pauses `requestAnimationFrame`. Each game was tested by temporarily adding a `window.__x = { G, step(n) {...} }` hook at the end of its script, stepping the simulation by hand, cropping and magnifying the canvas, then **removing the hook**.
@@ -39,14 +40,18 @@
   - Also fixed: the initials prompt showed after every game (the check used 20 instead of 10).
   - The lobby blurb now describes the game correctly.
 - [x] **Nova Swarm:** the ship banks and tilts with sideways speed, with layered plasma engines and wingtip pods. Drones have legs and veined wings; stingers have legs, faceted eyes and a pulsing glowing stinger; wardens have mandibles.
-- [ ] **Flipside Diner Pinball (`site/pinball/`):** better table textures, bumper lighting and flipper decals. **← next**
+- [x] **Flipside Diner Pinball:** the 3D table already had painted textures, bumper caps and a full lighting system (hit flash, sizzle, light shows, rainbow). Added the missing pieces: pink "FLIPSIDE" decals with a star badge on the flippers ("TO GO!" on the upper one) and a glowing LED ring at each bumper's base that follows the bumper lighting. The `game.js` cache version is bumped.
 
 ### Task 3 — App icons ✅
 - `site/icons/{drift,chomp,stack}-{180,192,512}.png`, rendered from SVG with Playwright's headless Chromium (`~/.cache/ms-playwright/chromium_headless_shell-1254/...`) and resized with PIL.
 
 ### Task 4 — Deployment
-- [x] Pushed to `origin/main` on 2026-11-16: Turbo Drift, icons, and the polish for 5 games.
-- [ ] Push again once Pinball is done.
+- [x] Deploy workflow fixed (`602eb1a`), and everything is pushed and live on 2026-11-16, including the Pinball polish.
+
+## Possible next steps (not requested yet)
+- Update the Chomper lobby card art to match the pie chomper.
+- The Actions runs warn that Node 20 is deprecated; the workflow uses `actions/checkout@v4` and `cloudflare/wrangler-action@v3`. It works for now.
+- Hop Across could get pickups, vans, semis and turtles, but that would change lane gameplay.
 
 ---
 
