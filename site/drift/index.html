@@ -80,7 +80,11 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const pick = arr => arr[(Math.random() * arr.length) | 0];
 function hash(n) { let x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
 function fit() {
-  const aw = wrap.clientWidth || innerWidth, ah = wrap.clientHeight || innerHeight;
+  // Measure the space inside the safe-area padding (notches, rounded corners, home bar),
+  // not the whole screen, or the game spills off the top and bottom on phones.
+  const cs = getComputedStyle(wrap), px = v => parseFloat(v) || 0;
+  const aw = Math.max(1, (wrap.clientWidth || innerWidth) - px(cs.paddingLeft) - px(cs.paddingRight));
+  const ah = Math.max(1, (wrap.clientHeight || innerHeight) - px(cs.paddingTop) - px(cs.paddingBottom));
   let h = Math.round(clamp(W * ah / aw, 680, 1000));
   if (!IS_TOUCH) h = Math.min(h, 860);
   H = h;
