@@ -1,96 +1,55 @@
-# Jones Ridge Arcade — Future Session Roadmap & Handoff
+# Jones Ridge Arcade — Roadmap & Handoff
 
-**Saved:** November 16, 2026  
-**Status:** 8 of 9 games integrated on `main` (commit `9a6a9dd`). Session paused for quota/usage reset.  
-**Repository Working Directory:** `/home/j03jones/Documents/jones-ridge-arcade`  
-
----
-
-## 1. What Has Been Completed & Committed (`main` @ `9a6a9dd`)
-
-All previously scattered swarm work was collected, integrated, and committed to git:
-
-- [x] **Game 07: Chomper (`site/chomp/`)** — Full 71KB diner-themed maze/pac-man game added.
-- [x] **Game 08: Stack House (`site/stack/`)** — Full 54KB burger/ingredient stacking arcade game added.
-- [x] **Audio & Music Additions**:
-  - Nova Swarm (`site/nova/index.html`): Procedural Web Audio synthwave soundtrack (bassline, hats, lead melody, dynamic boss layer).
-  - Blue Plate Rush (`site/rush/index.html`): 1950s diner background ragtime + walking bass with Rush Hour tempo acceleration.
-  - Hop Across (`site/hop/index.html`): Dual-oscillator jump tones, coin chime, combo celebrations.
-- [x] **Game Feel & Juice**:
-  - Short Order Hero (`site/hero/game.js`): Squash/stretch jumping, horizontal landing dust particles, hit flash & freeze-frames.
-  - Flipside Diner Pinball (`site/pinball/game.js`): Nudge & TILT mechanics, 500k extra ball awards, DMD message queue, flasher light shows.
-  - Hop Across (`site/hop/index.html`): Fast-hop combo system, collectible coins, rain/night weather.
-- [x] **Lobby & Scoreboard**:
-  - `site/_worker.js`: Registered `chomp` and `stack` in KV scoreboard.
-  - `site/index.html`: Added neon cabinet cards for Chomper and Stack House; updated game counter to `08`.
+**Last saved:** November 16, 2026 (Claude session)
+**Status:** All 9 games are in the arcade. Art polish is done for 5 of 6 games; **only Pinball is left**. Nothing is pushed yet.
+**Repository:** `/home/j03jones/Documents/jones-ridge-arcade` (all live files are in `site/`)
 
 ---
 
-## 2. Outstanding Scope for Next Session
+## Where to pick up
 
-The user's goal is to have **9 total games**, make all games easy and intuitive to play, and upgrade the sprites/visuals to be detailed, polished, and fun.
+1. **Pinball art polish** (`site/pinball/game.js`, the last item in Task 2 below).
+2. Optional: **update the Chomper lobby card** in `site/index.html`. It still shows a yellow Pac-Man-style wedge; the game and icon now use a lattice-crust pie with a chef's hat.
+3. **Deploy:** `git push origin main`. This runs `.github/workflows/deploy.yml` and publishes `site/` to Cloudflare Pages. `main` is several commits ahead of `origin/main`.
 
-### Task 1: Complete Game 09 — Turbo Drift (`site/drift/`)
-- **Manifest:** Already exists at `/home/j03jones/.gemini/antigravity-cli/worktrees/e01e6662-37e1-421a-9f7f-cd5142741300/swarm-drift-e736bf78/site/drift/manifest.webmanifest`.
-- **Target:** Create `site/drift/index.html` (self-contained HTML5 Canvas game, portrait-friendly):
-  - Theme: Retro arcade top-down/isometric diner delivery drifting game (sliding around curves, delivering hot food before it cools, dodging traffic and oil slicks).
-  - Controls: Left/Right steer (or touch steer/drift button), automatic or hold-to-accelerate.
-  - High score integration with `/api/scores/drift`.
-- **Registration**:
-  - Add `drift: { key: 'top10:drift', maxScore: 10000000 }` to `GAMES` in `site/_worker.js`.
-  - Add cabinet card `GAME 09: TURBO DRIFT` to `site/index.html`.
-  - Update top bar game counter to `09` in `site/index.html`.
-
-### Task 2: Sprite & Visual Art Polish (Detailed & Fun)
-Currently, several games rely on plain geometric canvas shapes (rectangles and circles). Upgrade the sprite rendering functions:
-
-1. **Boing Breaker (`site/boing/index.html`)**:
-   - **Bricks**: Beveled 3D borders, glossy top highlights, cracked state variants on multi-hit.
-   - **Paddle**: Polished chrome bar with metallic gradient and curved end caps.
-   - **Ball**: Subtle glow trail, rotating specular highlight.
-   - **Juice**: Colored shard explosion particles on break; screen shake on multi-brick streaks.
-   - **Audio & UI**: Web Audio SFX (bounce, break, powerup, death); on-screen pause button; initial control tutorial overlay.
-
-2. **Hop Across (`site/hop/index.html`)**:
-   - **Vehicles**: Replace solid blocks with detailed canvas-drawn classic cars, pickup trucks, delivery vans, and semi-trucks (headlights, bumpers, windshields, spinning wheel hubs).
-   - **Logs/Turtles**: Wood grain texture, bark edges, water wake ripples.
-   - **Train**: Detailed locomotive engine with animated smoke puff particles.
-   - **Hero**: Frankie the Chef character with animated toque, apron, and hop squash/stretch.
-
-3. **Chomper (`site/chomp/index.html`)**:
-   - **Hero**: Chomper with animated pie-slice mouth, eye blink, and eating animations.
-   - **Ghosts**: Diner health inspector / dish monster shapes with flowing wavy skirts, pupils tracking player position, and blue flickering "scared" sprites during power pellets.
-   - **Food Pellets**: Cherry, fries, milkshake, and burger bonus pickups with distinct sprite art.
-
-4. **Stack House (`site/stack/`)**:
-   - **Ingredients**: Detailed rendering for toasted sesame bun, seared grill-mark burger patty, melted cheddar drips, wavy bacon strips, crinkle-cut pickles, red tomato slices, ruffled lettuce leaves.
-   - **Animations**: Juicier squash on drop impact, ketchup/mustard splash particles.
-
-5. **Nova Swarm (`site/nova/index.html`)**:
-   - **Player Ship**: Wing thruster plasma glows, banking tilts when moving left/right.
-   - **Alien Swarm**: Insectoid alien sprites with fluttering wings and glowing stingers.
-
-6. **Flipside Diner Pinball (`site/pinball/`)**:
-   - Visual enhancements to 3D table textures, bumper lighting, and flipper decals.
-
-### Task 3: PWA Icons Generation
-Generate or update icons in `site/icons/` (`180x180`, `192x192`, `512x512`) for:
-- `chomp-180.png`, `chomp-192.png`, `chomp-512.png`
-- `stack-180.png`, `stack-192.png`, `stack-512.png`
-- `drift-180.png`, `drift-192.png`, `drift-512.png`
-
-### Task 4: Deployment
-When all 9 games are polished and verified:
-```bash
-git add site/
-git commit -m "Complete 9-game arcade: add Turbo Drift, detailed sprite artwork and gameplay polish across all games"
-git push origin main
-```
-This triggers the GitHub Action `.github/workflows/deploy.yml` which deploys directly to Cloudflare Pages.
+**How the work has been tested:** a local server (`python3 -m http.server 8787 --directory site`, saved as the `arcade` entry in `.claude/launch.json`) and the in-app browser at phone size (about 480×820).
+- The browser pane is often hidden, which pauses `requestAnimationFrame`. Each game was tested by temporarily adding a `window.__x = { G, step(n) {...} }` hook at the end of its script, stepping the simulation by hand, cropping and magnifying the canvas, then **removing the hook**.
+- The 404s for `/api/scores/...` locally are expected. The scoreboard worker only runs on Cloudflare, and the games fall back to a scoreboard stored on the device.
 
 ---
 
-## 3. Important Repository Notes
-- All active website files live in **`site/`**. Cloudflare Pages deploys the contents of `site/`.
-- Do not edit the redundant subfolder `jones-ridge-arcade/` (it is an old staging artifact).
-- Local commits on `main` are currently ahead of `origin/main` by 1 commit (`9a6a9dd`).
+## Done
+
+### Before this session (commit `9a6a9dd`)
+- Chomper (game 07) and Stack House (game 08) added, plus the earlier audio and game-feel upgrades (Nova music, Rush music, Hop combos/coins/weather, Hero squash/stretch, Pinball nudge/TILT).
+
+### Task 1 — Turbo Drift, game 09 (`site/drift/`) ✅
+- A new top-down night delivery driving game. Hold left/right (or the arrow keys / A and D) to steer; the car speeds up on its own. Hold both sides (or press down / Space) to brake. Steering assist straightens the car when you let go.
+- A "food heat" timer, green drop zones next to houses, coffee pickups, traffic (3 crashes allowed), oil slicks from level 2, drift scoring up to ×5, and a level up every 3 deliveries.
+- Registered in `site/_worker.js` (`drift`), with a GAME 09 lobby card; the counter reads `09`.
+- Difficulty was tuned with a bot: a careful driver survives 80+ seconds.
+
+### Task 2 — Art polish
+- [x] **Boing Breaker:** beveled glossy bricks with shadows, crack stages on steel, glowing fuse and hazard stripes on explosive bricks, a shine on gold. A chrome paddle that squashes on hits, with glowing end caps. A ball with glow, trail and a spinning highlight. Spinning triangle shards, and screen shake on 3+ brick streaks and explosions. (It already had sound effects, a pause button and a how-to screen.)
+- [x] **Hop Across:** spinning spoked wheels, chrome bumpers, drivers, door seams and exhaust puffs. Logs with bark edges, knots and two cut ends. A roof vent with diesel haze on the train (a steam stack looked wrong on the modern train). A striped apron and swaying toque on the chef.
+  - *Not done:* pickups, vans, semis and turtles. These would change lane gameplay, not just the art.
+- [x] **Chomper:** the chomper is now a lattice-crust pie with a cherry mouth, a blinking eye, a toque and a bite pop; the old version looked too much like Pac-Man. The pests have shaded bodies, flowing skirts and pupils that track the player, and turn blue with a sweat drop when scared. Bonus fruit became cherries, fries, a milkshake, a burger and a pie slice. Lives icons are pies.
+- [x] **Stack House:** this is a falling-block puzzle, not burger stacking, so each piece colour got a food texture: amber cheese, green lettuce, red tomato, orange sesame bun, purple onion, blue blueberry, teal mint shake. Blocks squash on landing, with ketchup/mustard splashes (bigger on a hard drop).
+  - Also fixed: the HOLD/NEXT side panels were clipped off-canvas, so cell size is now capped by width.
+  - Also fixed: the initials prompt showed after every game (the check used 20 instead of 10).
+  - The lobby blurb now describes the game correctly.
+- [x] **Nova Swarm:** the ship banks and tilts with sideways speed, with layered plasma engines and wingtip pods. Drones have legs and veined wings; stingers have legs, faceted eyes and a pulsing glowing stinger; wardens have mandibles.
+- [ ] **Flipside Diner Pinball (`site/pinball/`):** better table textures, bumper lighting and flipper decals. **← next**
+
+### Task 3 — App icons ✅
+- `site/icons/{drift,chomp,stack}-{180,192,512}.png`, rendered from SVG with Playwright's headless Chromium (`~/.cache/ms-playwright/chromium_headless_shell-1254/...`) and resized with PIL.
+
+### Task 4 — Deployment
+- [ ] `git push origin main` once Pinball is done (or sooner, if you want the current state live).
+
+---
+
+## Repository notes
+- Cloudflare Pages deploys `site/`. The `jones-ridge-arcade/` subfolder is an old staging leftover; don't edit it.
+- Each game is a self-contained page; all art is drawn in code and all sound is synthesized.
+- Every game also keeps a top 10 on the device (`<game>.top10` in localStorage) as a fallback for the online scoreboard.
