@@ -88,7 +88,11 @@ function layout(newH) {
 }
 let onLayout = () => {};
 function fit() {
-  const aw = wrap.clientWidth || innerWidth, ah = wrap.clientHeight || innerHeight;
+  // Measure the space inside the safe-area padding (notches, rounded corners, home bar),
+  // not the whole screen, or the game spills off the top and bottom on phones.
+  const cs = getComputedStyle(wrap), px = v => parseFloat(v) || 0;
+  const aw = Math.max(1, (wrap.clientWidth || innerWidth) - px(cs.paddingLeft) - px(cs.paddingRight));
+  const ah = Math.max(1, (wrap.clientHeight || innerHeight) - px(cs.paddingTop) - px(cs.paddingBottom));
   const aspect = ah / aw;
   const newH = aspect > 0.8 ? Math.round(Math.min(1400, W * aspect)) : 480;
   const fitScale = Math.min(aw / W, ah / newH);
@@ -926,7 +930,7 @@ function drawTitle() {
     return;
   }
   // ---- portrait / tall layout ----
-  const logoY = 40 + (H - 760) * 0.08;
+  const logoY = 72 + (H - 760) * 0.08; // leaves room for the ARCADE button above the logo
   for (let i = 0; i < 7; i++) copper(logoY + 120 + Math.sin(G.t * 1.6 + i * 0.5) * 40 + i * 3, 14, (i * 50 + G.t * 40) % 360);
   chromeText('BOING', W / 2 - 4, logoY + 60, 104);
   chromeText('BREAKER', W / 2 + 4, logoY + 160, 104);

@@ -1972,7 +1972,11 @@ function sizeCamera() {
 /* ====================== 2D interface layer ====================== */
 function fit() {
   const wrap = document.getElementById('wrap');
-  const aw = wrap.clientWidth || innerWidth, ah = wrap.clientHeight || innerHeight;
+  // Measure the space inside the safe-area padding (notches, rounded corners, home bar),
+  // not the whole screen, or the game spills off the top and bottom on phones.
+  const cs = getComputedStyle(wrap), px = v => parseFloat(v) || 0;
+  const aw = Math.max(1, (wrap.clientWidth || innerWidth) - px(cs.paddingLeft) - px(cs.paddingRight));
+  const ah = Math.max(1, (wrap.clientHeight || innerHeight) - px(cs.paddingTop) - px(cs.paddingBottom));
   const aspect = clamp(ah / aw, 1.45, 2.2);
   stageW = Math.floor(Math.min(aw, ah / aspect)); stageH = Math.floor(stageW * aspect);
   stage.style.width = stageW + 'px'; stage.style.height = stageH + 'px';

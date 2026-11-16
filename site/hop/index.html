@@ -76,7 +76,11 @@ const wrap = document.getElementById('wrap');
 
 let H = BASE_H, PADH = 0, dpr = 1;
 function fit() {
-  const aw = wrap.clientWidth || innerWidth, ah = wrap.clientHeight || innerHeight;
+  // Measure the space inside the safe-area padding (notches, rounded corners, home bar),
+  // not the whole screen, or the game spills off the top and bottom on phones.
+  const cs = getComputedStyle(wrap), px = v => parseFloat(v) || 0;
+  const aw = Math.max(1, (wrap.clientWidth || innerWidth) - px(cs.paddingLeft) - px(cs.paddingRight));
+  const ah = Math.max(1, (wrap.clientHeight || innerHeight) - px(cs.paddingTop) - px(cs.paddingBottom));
   let h = BASE_H;
   if (IS_TOUCH) h = Math.max(BASE_H, Math.min(BASE_H + 560, Math.round(W * ah / aw)));
   PADH = h - BASE_H >= 150 ? h - BASE_H : 0;

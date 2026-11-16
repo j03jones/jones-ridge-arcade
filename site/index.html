@@ -58,6 +58,24 @@
                 radial-gradient(ellipse at center, transparent 58%, rgba(0,0,0,.55) 100%);
     animation:flicker 6s infinite; }
 
+  /* ---------- persistent banner: score bar + marquee + ticker stay pinned to the top ---------- */
+  .banner { position:sticky; top:0; z-index:40;
+    margin: calc(-1 * (env(safe-area-inset-top) + 18px)) calc(-1 * (env(safe-area-inset-right) + 16px)) 24px calc(-1 * (env(safe-area-inset-left) + 16px));
+    padding: calc(env(safe-area-inset-top) + 12px) calc(env(safe-area-inset-right) + 16px) 0 calc(env(safe-area-inset-left) + 16px);
+    background: linear-gradient(rgba(8,2,22,.97), rgba(14,3,32,.93)); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    border-bottom: 2px solid var(--pink); box-shadow: 0 0 22px rgba(255,43,214,.45), 0 8px 18px rgba(0,0,0,.55); }
+  .banner .bar, .banner .marquee, .banner .ticker, .banner h1, .banner .coin { transition: margin .2s, padding .2s, font-size .2s, opacity .2s, max-height .2s; }
+  .banner .ticker { margin:0 auto; border-bottom:0; max-width:none; margin-inline:calc(-1 * (env(safe-area-inset-right) + 16px)); }
+  .banner .coin { max-height:2em; overflow:hidden; }
+  /* slim version once the page is scrolled */
+  .banner.compact .bar { margin-bottom:8px; }
+  .banner.compact .marquee { padding:12px 14px 11px; margin-bottom:10px; }
+  .banner.compact h1 { font-size:clamp(14px, 3.4vw, 24px); }
+  .banner.compact h1 .r { display:inline; font-size:1em; margin:0; }
+  .banner.compact .coin { max-height:0; margin:0; opacity:0; }
+  .banner.compact .bulbs::before { top:3px; } .banner.compact .bulbs::after { bottom:3px; }
+  .card { scroll-margin-top: 230px; }
+
   /* ---------- top bar ---------- */
   .bar { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; max-width:1100px; margin:0 auto 18px;
     font:10px/1.7 var(--pixel); text-transform:uppercase; }
@@ -130,13 +148,14 @@
   @keyframes buzz { 0%,92%,100% { opacity:1; } 93% { opacity:.35; } 94% { opacity:1; } 96% { opacity:.5; } }
   @keyframes flicker { 0%,100% { opacity:1; } 50% { opacity:.94; } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; } .ticker span { padding-left:0; } }
-  @media (max-width:520px) { .bar { font-size:8px; } .bar .mid { display:none; } body { font-size:18px; } }
+  @media (max-width:520px) { .bar { font-size:8px; gap:8px; } body { font-size:18px; } }
 </style>
 </head>
 <body>
 <div class="sky"></div><div class="stars"></div><div class="sun"></div><div class="horizon"></div><div class="grid"></div>
 <div class="crt" aria-hidden="true"></div>
 
+<div class="banner" id="banner">
 <div class="bar" aria-hidden="true">
   <div><div class="lbl">1UP</div><div class="val">00</div></div>
   <div class="mid"><div class="lbl">HI-SCORE</div><span class="val" id="hiBar">-------</span></div>
@@ -145,11 +164,12 @@
 
 <header class="marquee">
   <div class="bulbs" aria-hidden="true"></div>
-  <h1>JONES RIDGE<span class="r">ARCADE</span></h1>
+  <h1>JONES RIDGE<span class="r"> ARCADE</span></h1>
   <p class="coin">INSERT COIN</p>
 </header>
 
 <div class="ticker" aria-hidden="true"><span id="ticker">*** WELCOME TO JONES RIDGE ARCADE *** PICK A GAME AND PRESS START ***</span></div>
+</div>
 
 <main id="games">
   <a class="card" href="/boing/">
@@ -374,6 +394,16 @@
       done();
     })();
   });
+
+  // The banner stays pinned; once scrolled it slims down (with a gap between the two
+  // thresholds so it can't flicker while its own height changes).
+  const banner = document.getElementById('banner');
+  const onScroll = () => {
+    const y = scrollY;
+    if (y > 90) banner.classList.add('compact');
+    else if (y < 20) banner.classList.remove('compact');
+  };
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
   // Arcade-style selection: arrow keys move the cursor, Enter or Space starts the game.
   let sel = -1;

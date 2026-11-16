@@ -22,7 +22,11 @@ const lerp = (a, b, t) => a + (b - a) * t;
 // Desktop and phones held sideways: a wide 640 x 384 playfield.
 // Phones held upright: a narrower view with the control pad underneath.
 function fit() {
-  const aw = wrap.clientWidth || innerWidth, ah = wrap.clientHeight || innerHeight;
+  // Measure the space inside the safe-area padding (notches, rounded corners, home bar),
+  // not the whole screen, or the game spills off the top and bottom on phones.
+  const cs = getComputedStyle(wrap), px = v => parseFloat(v) || 0;
+  const aw = Math.max(1, (wrap.clientWidth || innerWidth) - px(cs.paddingLeft) - px(cs.paddingRight));
+  const ah = Math.max(1, (wrap.clientHeight || innerHeight) - px(cs.paddingTop) - px(cs.paddingBottom));
   PORTRAIT = IS_TOUCH && ah > aw * 1.05;
   if (PORTRAIT) { W = 416; H = Math.round(clamp(W * ah / aw, HUD + FIELD + 180, HUD + FIELD + 520)); PAD = H - HUD - FIELD; }
   else { H = HUD + FIELD; PAD = 0; W = Math.round(clamp(H * aw / ah, 640, 768)); }
