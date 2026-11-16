@@ -1,0 +1,47 @@
+/* Shared theme for the Arcade */
+:root {
+  --bg: #021;
+  --fg: #cfd8ff;
+  --accent: #5a7dff;
+  --accent-dark: #1c2350;
+}
+body {
+  background: var(--bg);
+  color: var(--fg);
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  overflow: hidden;
+}
+.arcade-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  backdrop-filter: blur(6px);
+  background: rgba(0,0,20,.7);
+  z-index: 5;
+}
+.arcade-title {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--accent);
+}
+.arcade-btn {
+  font: 600 14px system-ui, sans-serif;
+  padding: 6px 12px;
+  border: 1.5px solid rgba(170,195,255,.55);
+  border-radius: 22px;
+  background: rgba(0,0,20,.7);
+  color: var(--fg);
+  text-decoration: none;
+  cursor: pointer;
+}
+#hud {
+  font-size: 0.9rem;
+  color: var(--fg);
+}

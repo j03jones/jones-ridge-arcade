@@ -465,7 +465,7 @@ const isSolid = t => t === 1 || t === 2 || (t >= 4 && t <= 9) || t >= 11;
 /* ---------------- game state ---------------- */
 const G = {
   state: 'title', t: 0, stateT: 0, titleT: 0, score: 0, tips: 0, lives: 3, levelNum: 1,
-  time: 300, checkX: null, shake: 0, parts: [], pops: [], entryHandled: true, msg: '', sub: '', msgT: 0, tallyT: 0, winBonus: false,
+  time: 300, checkX: null, shake: 0, freezeT: 0, parts: [], pops: [], entryHandled: true, msg: '', sub: '', msgT: 0, tallyT: 0, winBonus: false,
 };
 let L = null, P = null;
 const cam = { x: 0, minX: 0 };
@@ -579,7 +579,7 @@ const griddleHot = (c) => ((G.t + Math.floor(c / 3) * 1.1) % 3.3) < 1.2;
 /* ---------------- the hero ---------------- */
 function newHero(x, y) {
   return { x, y, w: 18, h: 28, vx: 0, vy: 0, face: 1, ground: false, coyote: 0, jumpBuf: 0, jumping: false, hearts: 3, power: 0, rushT: 0, inv: 0,
-    anim: 0, throwT: 0, plat: null, dead: false, chain: 0, land: 0, wall: 0, bonk: null };
+    anim: 0, throwT: 0, plat: null, dead: false, chain: 0, land: 0, wall: 0, bonk: null, hitFlash: 0, squashX: 1, squashY: 1 };
 }
 function startLevel() {
   L = buildLevel(G.levelNum);
@@ -600,7 +600,7 @@ function hurtHero() {
   if (P.inv > 0 || P.rushT > 0 || P.dead || G.state !== 'play') return;
   if (P.power) { P.power = 0; pop(P.x + 9, P.y - 10, 'OUCH!', '#ff8a7a'); }
   else P.hearts--;
-  P.inv = 1.6; sfx.hurt(); buzz(60); G.shake = 0.25;
+  P.inv = 1.6; P.hitFlash = 0.05; sfx.hurt(); buzz(60); G.shake = 0.3;
   if (P.hearts <= 0) killHero();
 }
 function killHero() {
@@ -642,6 +642,7 @@ function updateHero(dt) {
   P.jumpBuf = jumpPressed ? 0.13 : P.jumpBuf - dt;
   if (P.jumpBuf > 0 && P.coyote > 0) {
     P.vy = -(566 + Math.abs(P.vx) * 0.12); P.jumping = true; P.coyote = 0; P.jumpBuf = 0; P.plat = null; sfx.jump(); puff(P.x + P.w / 2, P.y + P.h, 3, 0.8);
+    P.squashX = 0.85; P.squashY = 1.15; P.squashT = 0.05;
   }
   const g = P.vy < 0 && inp.jump ? GRAV_UP : GRAV_DOWN;
   P.vy = Math.min(MAX_FALL, P.vy + g * dt);
@@ -658,7 +659,16 @@ function updateHero(dt) {
   P.plat = plat;
   if (plat) P.ground = true;
   if (P.ground) {
-    if (!wasGround) { P.land = 0.12; P.chain = 0; puff(P.x + P.w / 2, P.y + P.h, 5, 1.3); }
+    if (!wasGround) {
+      P.land = 0.12; P.chain = 0; puff(P.x + P.w / 2, P.y + P.h, 5, 1.3);
+      // dust particles on landing — spread horizontally
+      for (let i = 0; i < 4; i++) {
+        const dx = (i < 2 ? -1 : 1) * (30 + Math.random() * 50);
+        G.parts.push({ x: P.x + P.w / 2 + (Math.random() - 0.5) * 6, y: P.y + P.h - 1, vx: dx, vy: -5 - Math.random() * 15, g: 40, life: 0.35 + Math.random() * 0.2, max: 0.55, c: 'rgba(180,160,130,0.8)', r: 2 + Math.random() * 1.5, grow: 3, puff: true });
+      }
+      // landing squash
+      P.squashX = 1.2; P.squashY = 0.8; P.squashT = 0.066;
+    }
     P.jumping = false;
     const skid = dir && Math.sign(P.vx) === -dir && Math.abs(P.vx) > 110;
     P.dustT = (P.dustT || 0) - dt;
@@ -669,6 +679,11 @@ function updateHero(dt) {
   if (P.bonk) bonkTile(P.bonk.c, P.bonk.r);
   P.anim += Math.abs(P.vx) * dt * 0.06;
   P.inv = Math.max(0, P.inv - dt); P.throwT = Math.max(0, P.throwT - dt); P.land = Math.max(0, P.land - dt);
+  P.hitFlash = Math.max(0, P.hitFlash - dt);
+  // squash-stretch update
+  if (P.squashT > 0) { P.squashT -= dt; if (P.squashT <= 0) { P.squashX = 1; P.squashY = 1; } }
+  else if (!P.ground && Math.abs(P.vy) < 60) { P.squashX = 1.05; P.squashY = 0.95; } // apex stretch
+  else if (P.squashX !== 1 || P.squashY !== 1) { P.squashX = lerp(P.squashX, 1, Math.min(1, dt * 12)); P.squashY = lerp(P.squashY, 1, Math.min(1, dt * 12)); }
   if (P.rushT > 0) { P.rushT -= dt; if (Math.random() < 0.5) burst(P.x + P.w / 2, P.y + P.h / 2, ['#ff7ad9', '#7af0ff', '#fff27a'], 1, 40, -50, 2.5); }
   // hazards
   const fc = Math.floor((P.x + P.w / 2) / T), fr = Math.floor((P.y + P.h - 6) / T);
@@ -765,6 +780,13 @@ function updateEnemies(dt) {
         if (e.type === 'meat') killEnemy(e, 'squash'); else killEnemy(e, 'flip');
         G.pops[G.pops.length - 1].txt = String(v); addScore(v - ENEMY[e.type].pts);
         P.vy = input().jump ? -620 : -400; sfx.stomp(); buzz(20); impact(e.x + e.w / 2, e.y + 4);
+        // stomp effects: freeze frame, colored particles, combo text
+        G.freezeT = 0.033;
+        const ec = { meat: ['#8a4a2a', '#c87a4a', '#5a2a10'], fly: ['#3a8a3a', '#6ac86a', '#205020'], toast: ['#d4a840', '#f0d080', '#8a7030'], jello: ['#4ae050', '#80ffa0', '#208a30'] }[e.type] || ['#ffffff'];
+        burst(e.x + e.w / 2, e.y + e.h / 2, ec, 10, 160, 500, 2.5);
+        if (P.chain > 1) pop(e.x + e.w / 2, e.y - 20, 'COMBO ×' + P.chain, '#7af0ff');
+        else pop(e.x + e.w / 2, e.y - 20, 'STOMP!', '#ff7ad9');
+        G.shake = 0.15;
       }
     } else hurtHero();
   }
@@ -896,6 +918,7 @@ function update(dt) {
   G.parts = G.parts.filter(p => p.life > 0);
   for (const p of G.pops) { p.t -= dt; p.y -= 30 * dt; } G.pops = G.pops.filter(p => p.t > 0);
   if (G.shake > 0) G.shake -= dt;
+  if (G.freezeT > 0) { G.freezeT -= dt; return; } // stomp freeze frame
   if (G.msgT > 0) G.msgT -= dt;
   for (const b of L.bumps) b.t += dt; L.bumps = L.bumps.filter(b => b.t < 0.2);
   for (const c of L.coinPops) { c.t += dt; c.vy += 1500 * dt; c.y += c.vy * dt; } L.coinPops = L.coinPops.filter(c => c.t < 0.55);
@@ -1365,6 +1388,62 @@ function drawBackground() {
   }
 }
 
+/* ---------------- animated background elements ---------------- */
+function drawBgAnimations(cx) {
+  if (!L) return;
+  const th = L.theme, t = G.t;
+  ctx.save();
+  if (th === 'kitchen') {
+    // steam rising from pots in the background
+    ctx.globalAlpha = 0.18;
+    for (let i = 0; i < 5; i++) {
+      const bx = ((i * 180 + 40 - cx * 0.55) % (W + 200) + W + 200) % (W + 200) - 100;
+      for (let j = 0; j < 3; j++) {
+        const ph = (t * 0.6 + j * 0.33 + i * 0.17) % 1;
+        const sx = bx + Math.sin(t * 1.5 + j * 2 + i) * 6;
+        const sy = FIELD - 60 - ph * 90;
+        const r = 3 + ph * 5;
+        ctx.globalAlpha = (1 - ph) * 0.2;
+        ctx.fillStyle = '#e8e0d0';
+        ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    // flickering overhead lights
+    ctx.globalAlpha = 0.06 + 0.03 * Math.sin(t * 17) + 0.02 * Math.sin(t * 31);
+    ctx.fillStyle = '#fffae0';
+    for (let i = 0; i < 4; i++) {
+      const lx = ((i * 220 + 80 - cx * 0.55) % (W + 300) + W + 300) % (W + 300) - 150;
+      ctx.fillRect(lx - 40, 0, 80, FIELD * 0.6);
+    }
+  } else if (th === 'diner') {
+    // jukebox pulsing lights in background
+    for (let i = 0; i < 3; i++) {
+      const bx = ((i * 280 + 120 - cx * 0.55) % (W + 300) + W + 300) % (W + 300) - 150;
+      for (let j = 0; j < 4; j++) {
+        const hue = (t * 80 + j * 90 + i * 60) % 360;
+        ctx.globalAlpha = 0.12 + 0.08 * Math.sin(t * 4 + j + i);
+        ctx.fillStyle = `hsl(${hue},90%,60%)`;
+        ctx.beginPath(); ctx.arc(bx + j * 12 - 18, FIELD - 100 + Math.sin(t * 2 + j) * 3, 3, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    // ceiling fan rotation
+    ctx.globalAlpha = 0.12;
+    for (let i = 0; i < 2; i++) {
+      const fx = ((i * 350 + 200 - cx * 0.55) % (W + 400) + W + 400) % (W + 400) - 200;
+      const fy = 22;
+      ctx.save(); ctx.translate(fx, fy); ctx.rotate(t * 3 + i);
+      ctx.fillStyle = '#5a4a3a';
+      for (let b = 0; b < 4; b++) {
+        ctx.rotate(Math.PI / 2);
+        ctx.fillRect(-2, 0, 4, 28);
+      }
+      ctx.restore();
+    }
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
 /* ---------------- ink outlines ----------------
    Characters are painted into a scratch canvas, then stamped around themselves in a dark
    colour to give them a cartoon outline before the real paint goes on top. */
@@ -1385,7 +1464,18 @@ function withInk(bx, by, w, h, drawFn, color = '#1c0a14', thick = 1.15) {
   ctx.drawImage(inkB, 0, 0, pw, ph, bx - sx, by - sx, pw / k, ph / k);
   ctx.drawImage(inkA, 0, 0, pw, ph, bx - sx, by - sx, pw / k, ph / k);
 }
-function drawFrankie(x, y, o = {}) { const s = o.scale || 1; withInk(x - 28 * s, y - 50 * s, 56 * s, 56 * s, () => drawFrankieRaw(x, y, o)); }
+function drawFrankie(x, y, o = {}) {
+  const s = o.scale || 1;
+  withInk(x - 28 * s, y - 50 * s, 56 * s, 56 * s, () => {
+    drawFrankieRaw(x, y, o);
+    if (o.hitFlash > 0) {
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = `rgba(255,255,255,${clamp(o.hitFlash * 18, 0, 0.92)})`;
+      ctx.fillRect(x - 28 * s, y - 50 * s, 56 * s, 56 * s);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  });
+}
 function drawDottie(x, y, s = 1, t = 0, o = {}) { withInk(x - 18 * s, y - 54 * s, 36 * s, 58 * s, () => drawDottieRaw(x, y, s, t, o)); }
 function drawGreasy(x, y, o = {}) { const r = o.spin ? 70 : 0; withInk(x - 52 - r, y - 106 - r, 104 + r * 2, 112 + r * 2, () => drawGreasyRaw(x, y, o), '#140608', 1.4); }
 function drawEnemy(e) { withInk(e.x - 12, e.y - 14, e.w + 24, e.h + 22, () => drawEnemyRaw(e)); }
@@ -1628,8 +1718,23 @@ function drawPlatform(p) {
 function drawCheckpoint(k) {
   const x = k.x + 16, y = k.y;
   ctx.fillStyle = '#5a5a62'; ctx.fillRect(x - 2, y - 64, 4, 64);
+  // diner bell on the counter
+  ctx.fillStyle = '#c0b8a0'; ctx.beginPath(); ctx.arc(x, y - 8, 8, Math.PI, 0); ctx.fill(); // dome
+  ctx.fillStyle = '#a09880'; ctx.fillRect(x - 9, y - 8, 18, 3); // base rim
+  ctx.fillStyle = '#706858'; ctx.beginPath(); ctx.arc(x, y - 14, 2.5, 0, Math.PI * 2); ctx.fill(); // knob
   ctx.fillStyle = '#1a1018'; rr(x - 26, y - 92, 52, 30, 6); ctx.fill(); ctx.strokeStyle = '#4a3a48'; ctx.lineWidth = 2; ctx.stroke();
-  if (k.on) { glow(x, y - 77, 46, '255,80,160', 0.35); drawNeonText('OPEN', x, y - 77, 15, '#ff7ab8', '255,80,160'); }
+  if (k.on) {
+    glow(x, y - 77, 46, '255,80,160', 0.35); drawNeonText('OPEN', x, y - 77, 15, '#ff7ab8', '255,80,160');
+    // sparkle around the bell
+    for (let i = 0; i < 3; i++) {
+      const a = G.t * 2.5 + i * 2.09, r = 14 + Math.sin(G.t * 3 + i) * 4;
+      const sx = x + Math.cos(a) * r, sy = y - 10 + Math.sin(a) * r * 0.6;
+      ctx.save(); ctx.translate(sx, sy); ctx.rotate(G.t * 4 + i);
+      ctx.globalAlpha = 0.5 + 0.3 * Math.sin(G.t * 5 + i);
+      starShape(0, 0, 3.5, '#ffe080'); ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
   else text('OPEN', x, y - 77, 15, '#4a3048', 'center', '900');
 }
 function drawJukebox(g, lit) {
@@ -1676,7 +1781,7 @@ function drawFreezer(d) {
 /* ---------------- world ---------------- */
 function heroOpts(h) {
   return { face: h.face, run: h.anim, speed: Math.abs(h.vx) / 165, air: !h.ground && !h.plat, power: h.power, rush: h.rushT > 0, throwT: h.throwT, t: G.t,
-    squash: h.land > 0 ? h.land * 1.2 : 0, dance: G.state === 'clear' && G.stateT > 0.6, skid: h.skid };
+    squash: h.squashX !== 1 ? (h.squashX - 1) : (h.land > 0 ? h.land * 1.2 : 0), dance: G.state === 'clear' && G.stateT > 0.6, skid: h.skid, hitFlash: h.hitFlash };
 }
 function dottieWalkX() {
   const d = L.dottie, doorX = d.x + T + 14 + 1.1 * T, meet = P.x + P.w + 22, k = 1 - Math.pow(1 - d.out, 2);
@@ -1686,6 +1791,7 @@ function drawWorld() {
   ctx.save(); ctx.translate(0, HUD);
   ctx.beginPath(); ctx.rect(0, 0, W, FIELD); ctx.clip();
   drawBackground();
+  drawBgAnimations(cam.x);
   const cx = Math.round(cam.x * dpr) / dpr;
   ctx.save(); ctx.translate(-cx, 0);
   const c0 = Math.max(0, Math.floor(cam.x / T) - 1), c1 = Math.min(L.w - 1, Math.ceil((cam.x + W) / T) + 1);

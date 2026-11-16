@@ -189,7 +189,57 @@ const sfx = {
   clear() { [392, 523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, 0.14, i % 2 ? 'triangle' : 'square', 0.055, null, i * 0.1)); },
   over() { [440, 370, 294, 220].forEach((f, i) => tone(f, 0.3, 'triangle', 0.09, null, i * 0.22)); },
   move() { tone(420, 0.03, 'square', 0.025); },
+  caching() { tone(2637, 0.06, 'triangle', 0.06); tone(3520, 0.12, 'triangle', 0.06, null, 0.05); tone(4186, 0.15, 'triangle', 0.04, null, 0.1); },
+  rushStart() { [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, 0.1, 'square', 0.06, null, i * 0.04)); },
 };
+
+/* ---------------- background music (1950s diner) ---------------- */
+let musicNodes = [], musicTimer = null, musicPlaying = false;
+const MELODY = [
+  523, 523, 659, 784, 880, 784, 659, 523,
+  587, 659, 784, 880, 784, 659, 587, 523,
+  523, 659, 784, 1047, 880, 784, 659, 523,
+  880, 784, 659, 523, 587, 659, 784, 523,
+];
+const BASS = [
+  262, 262, 330, 392, 262, 262, 330, 392,
+  294, 294, 349, 392, 294, 294, 262, 262,
+  262, 262, 330, 392, 440, 392, 330, 262,
+  440, 392, 330, 262, 294, 330, 392, 262,
+];
+function stopMusic() {
+  musicPlaying = false;
+  if (musicTimer) { clearTimeout(musicTimer); musicTimer = null; }
+  for (const n of musicNodes) { try { n.stop(); } catch (e) {} try { n.disconnect(); } catch (e) {} }
+  musicNodes = [];
+}
+function startMusic() {
+  stopMusic();
+  if (muted || !ac || G.state !== 'play') return;
+  musicPlaying = true;
+  scheduleMusicChunk(0);
+}
+function scheduleMusicChunk(noteIdx) {
+  if (!musicPlaying || !ac || muted || G.state !== 'play') { stopMusic(); return; }
+  const bpm = G.rushHourActive ? 140 : 120;
+  const beatLen = 60 / bpm;
+  const now = ac.currentTime;
+  for (let i = 0; i < 8; i++) {
+    const t = now + i * beatLen;
+    const mi = (noteIdx + i) % MELODY.length;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle'; o.frequency.setValueAtTime(MELODY[mi], t);
+    g.gain.setValueAtTime(0.04, t); g.gain.exponentialRampToValueAtTime(0.0001, t + beatLen * 0.85);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t + beatLen);
+    musicNodes.push(o);
+    const ob = ac.createOscillator(), gb = ac.createGain();
+    ob.type = 'square'; ob.frequency.setValueAtTime(BASS[mi], t);
+    gb.gain.setValueAtTime(0.025, t); gb.gain.exponentialRampToValueAtTime(0.0001, t + beatLen * 0.7);
+    ob.connect(gb).connect(ac.destination); ob.start(t); ob.stop(t + beatLen);
+    musicNodes.push(ob);
+  }
+  musicTimer = setTimeout(() => scheduleMusicChunk((noteIdx + 8) % MELODY.length), 8 * beatLen * 1000 - 100);
+}
 
 /* ---------------- customers ---------------- */
 // kind: regular, kid (quick, slides far), trucker (needs two plates), critic (never pauses, triple points)

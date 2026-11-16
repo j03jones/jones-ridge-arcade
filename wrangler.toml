@@ -1,0 +1,13 @@
+name = "jones-ridge-arcade"
+compatibility_date = "2024-01-01"
+
+# KV namespace binding for scores (replace <KV_NAMESPACE_ID> with your actual KV ID)
+kv_namespaces = [
+  { binding = "SCORES", id = "<KV_NAMESPACE_ID>" }
+]
+
+type = "javascript"
+main = "worker.js"
+
+# Entry point for the worker (default is ./index.js if not set)
+# You can also set a custom route or trigger via Cloudflare Pages Functions.

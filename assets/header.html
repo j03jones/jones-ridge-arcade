@@ -1,0 +1,22 @@
+<header class="arcade-header">
+  <a id="home" href="/" class="arcade-btn">← ARCADE</a>
+  <h1 class="arcade-title">Jones Ridge Arcade</h1>
+  <button id="darkToggle" class="arcade-btn">🌓</button>
+  <div id="hud">
+    Score: <span id="hudScore">0</span> |
+    Lives: <span id="hudLives">3</span> |
+    Level: <span id="hudLevel">1</span>
+  </div>
+</header>
+
+<script>
+  // Simple dark‑mode toggle (saved in localStorage)
+  const root = document.documentElement;
+  const saved = localStorage.getItem('arcadeTheme') || 'dark';
+  root.dataset.theme = saved;
+  document.getElementById('darkToggle').addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    localStorage.setItem('arcadeTheme', next);
+  });
+</script>
