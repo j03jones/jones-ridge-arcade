@@ -17,6 +17,8 @@ const GAMES = {
   pin:   { key: 'top10:pin', maxScore: 500000000 },
   rush:  { key: 'top10:rush', maxScore: 20000000 },
   hero:  { key: 'top10:hero', maxScore: 50000000 },
+  chomp: { key: 'top10:chomp', maxScore: 10000000 },
+  stack: { key: 'top10:stack', maxScore: 10000000 },
 };
 
 const MAX_ENTRIES = 10;

@@ -229,6 +229,16 @@ const G = {
   disp: null, dispQ: [], callouts: [], pops: [], flash: 0, shake: 0, intro: null,
   plunger: 0, charging: false, autoT: 0, queue: 0, pendingOut: [], entryHandled: false,
   chef: { mood: 'idle', t: 0, dur: 0 },
+  // nudge / tilt
+  nudgeHistory: [], tiltT: 0, tiltWarning: false, nudgeOffX: 0, nudgeOffZ: 0,
+  // enhanced light shows
+  lightShowT: 0, lightShowColor: null, rainbowT: 0, flashColor: null,
+  // extra ball awards
+  lastExtraThreshold: 0, modesCompletedCount: 0,
+  // DMD message queue
+  dmdQueue: [], dmdMsg: null, dmdT: 0,
+  // replay / match
+  matchTarget: 0, matchPhase: 'none', matchT: 0, matchDigit: -1, matchWin: false, replay: false,
 };
 function newBall(x, y, vx = 0, vy = 0, state = 'play') { const b = { x, y, vx, vy, r: BALL_R, state, h: 0, trail: [], still: 0, rampD: 0, path: null, hold: 0 }; G.balls.push(b); return b; }
 function serveToLane(auto) {
@@ -237,7 +247,12 @@ function serveToLane(auto) {
 }
 const activeBalls = () => G.balls.filter(b => b.state === 'play' || b.state === 'lane' || b.state === 'ramp' || b.state === 'scoop');
 
-function addScore(n) { G.score += Math.round(n); }
+function addScore(n) {
+  G.score += Math.round(n);
+  // extra ball at every 500K
+  const thresh = Math.floor(G.score / 500000);
+  if (thresh > G.lastExtraThreshold) { G.lastExtraThreshold = thresh; G.extraBalls++; callout('EXTRA BALL!', '#7dff9a', '500,000 POINTS BONUS'); queueDMD('EXTRA BALL AWARDED!', 2); sfx.award(); buzz([40, 40, 80]); G.flash = 0.6; }
+}
 function best() { return Math.max(+lsGet(GAME_ID + '.best', '0') || 0, BOARD[0] ? BOARD[0].score : 0, G.score); }
 function show(big, small = '', dur = 1.8, color = '#ffb347', prio = 1) {
   const m = { big, small, dur, t: 0, color, prio };
@@ -246,6 +261,33 @@ function show(big, small = '', dur = 1.8, color = '#ffb347', prio = 1) {
 function callout(txt, color = '#ffd84a', sub = '') { G.callouts.push({ txt, sub, color, t: 0 }); fireFlashers(); }
 function chef(mood, dur = 1.6) { G.chef = { mood, t: 0, dur }; }
 function pop(x, y, txt, color = '#ffffff') { G.pops.push({ x, y, txt, color, t: 1 }); }
+function nudge(dir) {
+  if (G.state !== 'play' || G.phase !== 'play' || G.tiltT > 0) return;
+  const now = performance.now();
+  G.nudgeHistory.push(now);
+  G.nudgeHistory = G.nudgeHistory.filter(t => now - t < 2000);
+  // apply velocity impulse to all live balls
+  for (const b of G.balls) { if (b.state === 'play' || b.state === 'lane') b.vx += dir * 160; }
+  G.nudgeOffX = dir * 0.6; G.shake = Math.max(G.shake, 0.15);
+  sfx.sling();
+  if (G.nudgeHistory.length >= 3) {
+    // TILT!
+    G.tiltT = 3; G.tiltWarning = false; G.nudgeHistory = [];
+    callout('TILT!', '#ff4a4a', 'FLIPPERS DISABLED');
+    queueDMD('TILT!', 2.5);
+    FLIPPERS.forEach(f => f.pressed = false);
+    // drain all balls
+    for (const b of G.balls) { if (b.state === 'play' || b.state === 'lane') { b.vy = Math.max(b.vy, 300); } }
+  } else if (G.nudgeHistory.length >= 2) {
+    G.tiltWarning = true;
+    show('DANGER', 'TILT WARNING', 1.2, '#ff4a4a', 2);
+  }
+}
+function queueDMD(text, dur = 2.2) {
+  const msg = { text, dur, t: 0 };
+  if (!G.dmdMsg) { G.dmdMsg = msg; G.dmdT = 0; }
+  else G.dmdQueue.push(msg);
+}
 
 function resetBallState() {
   G.targets = [false, false, false, false]; G.lanes = [false, false, false]; G.bonusX = 1;
@@ -256,7 +298,14 @@ function startGame() {
   audio();
   Object.assign(G, { score: 0, ball: 1, extraBalls: 0, balls: [], chefDone: 0, bumperHits: 0, lockLit: false, locks: 0, multiball: false, jackpots: 0, superLit: false, extraLit: false,
     kickbackLit: true, scoopLit: false, mode: -1, modesPlayed: [false, false, false, false], wizard: false, rampCount: 0,
-    callouts: [], pops: [], dispQ: [], disp: null, phase: 'play', queue: 0, pendingOut: [], intro: null, fridgeTarget: 0 });
+    callouts: [], pops: [], dispQ: [], disp: null, phase: 'play', queue: 0, pendingOut: [], intro: null, fridgeTarget: 0,
+    // new state
+    nudgeHistory: [], tiltT: 0, tiltWarning: false, nudgeOffX: 0, nudgeOffZ: 0,
+    lightShowT: 0, lightShowColor: null, rainbowT: 0, flashColor: null,
+    lastExtraThreshold: 0, modesCompletedCount: 0,
+    dmdQueue: [], dmdMsg: null, dmdT: 0,
+    matchTarget: Math.floor(Math.random() * 100), matchPhase: 'none', matchT: 0, matchDigit: -1, matchWin: false, replay: false,
+  });
   MINE = null;
   resetBallState(); serveBall();
   G.state = lsGet(GAME_ID + '.tipsSeen', '0') === '1' ? 'play' : 'tips'; G.stateT = 0;
@@ -290,6 +339,10 @@ function modeShot(key) {
   if (G.modeProg >= m.goal) {
     addScore(m.done); G.tally.modes++; G.modesPlayed[G.mode] = true;
     callout(m.name + ' DONE!', m.color, '+' + m.done.toLocaleString()); sfx.jackpot(); chef('cheer', 2); buzz([50, 40, 90]); G.flash = 0.7;
+    G.lightShowT = 2; G.lightShowColor = m.color;
+    queueDMD(m.name + ' COMPLETE!', 2.5);
+    G.modesCompletedCount++;
+    if (G.modesCompletedCount >= 2 && !G.extraLit) { G.extraLit = true; show('EXTRA BALL', 'LIT AT LEFT ORBIT', 2, '#7dff9a', 3); queueDMD('EXTRA BALL IS LIT!', 2); }
     G.mode = -1; checkWizardReady();
   } else { sfx.award(); chef('flip', 1); }
   return true;
@@ -372,7 +425,8 @@ function rampFinished(b) {
   if (G.multiball) {
     G.jackpots++;
     const val = 50000 * Math.min(5, G.jackpots);
-    addScore(val); callout('JACKPOT!', '#ffd84a', '+' + val.toLocaleString()); sfx.jackpot(); buzz([60, 40, 120]); G.shake = 0.5; G.flash = 0.8; chef('cheer', 1.5);
+    addScore(val); callout('JACKPOT!', '#ffd84a', '+' + val.toLocaleString()); sfx.jackpot(); buzz([60, 40, 120]); G.shake = 0.5; G.flash = 1.2; chef('cheer', 1.5);
+    queueDMD('JACKPOT! +' + val.toLocaleString(), 2);
     if (G.jackpots === 3) { G.superLit = true; show('SUPER JACKPOT', 'IS LIT AT THE ORDER WINDOW', 2.4, '#ffd84a', 3); }
     return;
   }
@@ -386,6 +440,8 @@ function exitRamp(b) { const e = b.path.raw[b.path.raw.length - 1]; b.state = 'p
 function startMultiball() {
   G.multiball = true; G.jackpots = 0; G.superLit = false; G.locks = 0; G.saveT = 14; G.saveUsed = false;
   callout('DINNER RUSH!', '#ff6fb5', 'MULTIBALL!'); sfx.multi(); buzz([80, 60, 80, 60, 160]); G.flash = 1; G.shake = 0.6;
+  G.rainbowT = 3;
+  queueDMD('DINNER RUSH — MULTIBALL!', 2.5);
   G.fridgeTarget = 1; G.fridgeHoldT = 2.2;
   G.balls.filter(b => b.state === 'locked').forEach((b, i) => { b.state = 'wait'; G.pendingOut.push({ b, t: 0.5 + i * 0.8 }); });
   serveToLane(true);
@@ -407,7 +463,8 @@ function scoopCapture(b) {
   fireFlashers(['yellow']);
   b.state = 'scoop'; b.x = SCOOP.x; b.y = SCOOP.y; b.vx = b.vy = 0; b.hold = 1.2; G.scoopFlash = 1; sfx.scoop(); G.skillLive = false;
   if (G.superLit && G.multiball) {
-    G.superLit = false; addScore(500000); callout('SUPER JACKPOT!', '#ffd84a', '+500,000'); sfx.jackpot(); buzz([80, 50, 150]); G.flash = 1; G.shake = 0.8; chef('cheer', 2.5); return;
+    G.superLit = false; addScore(500000); callout('SUPER JACKPOT!', '#ffd84a', '+500,000'); sfx.jackpot(); buzz([80, 50, 150]); G.flash = 1.5; G.flashColor = '#ffd84a'; G.shake = 0.8; chef('cheer', 2.5);
+    queueDMD('SUPER JACKPOT! +500,000', 3); return;
   }
   if (G.wizard) { modeShot('x'); return; }
   if (G.scoopLit && !G.multiball && G.mode < 0) {
@@ -446,9 +503,16 @@ function afterBonus() {
   if (G.ball >= BALLS_PER_GAME) {
     G.state = 'over'; G.stateT = 0; G.entryHandled = false; G.balls = [];
     if (G.score > (+lsGet(GAME_ID + '.best', '0') || 0)) lsSet(GAME_ID + '.best', String(G.score));
+    G.matchPhase = 'spin'; G.matchT = 0; G.matchWin = false; G.replay = false;
     sfx.over(); return;
   }
   G.ball++; resetBallState(); serveBall();
+}
+function replayGame() {
+  callout('MATCH!', '#7dff9a', 'REPLAY AWARDED!'); queueDMD('MATCH! FREE GAME!', 3);
+  sfx.award(); buzz([80, 60, 160]); G.flash = 1; G.shake = 0.5;
+  G.ball = 1; G.balls = []; G.state = 'play'; G.stateT = 0; G.phase = 'play'; G.phaseT = 0;
+  G.entryHandled = false; resetBallState(); serveBall();
 }
 
 /* ====================== physics ====================== */
@@ -510,7 +574,7 @@ function sensors(b, px, py) {
 }
 function physStep(dt) {
   for (const f of FLIPPERS) {
-    const target = f.pressed && G.phase === 'play' ? f.up : f.rest, old = f.ang, sp = f.pressed ? 23 : 15;
+    const target = (f.pressed && G.phase === 'play' && G.tiltT <= 0) ? f.up : f.rest, old = f.ang, sp = f.pressed && G.tiltT <= 0 ? 23 : 15;
     const dir = Math.sign(target - f.ang);
     f.ang += dir * sp * dt;
     if ((dir > 0 && f.ang > target) || (dir < 0 && f.ang < target)) f.ang = target;
@@ -555,7 +619,20 @@ function update(dt) {
   if (G.state === 'over' && G.stateT > 1.2 && !G.entryHandled) { G.entryHandled = true; if (qualifies(G.score)) openEntry(); }
   for (const p of G.pops) { p.t -= dt; p.y -= 30 * dt; } G.pops = G.pops.filter(p => p.t > 0);
   for (const c of G.callouts) c.t += dt; G.callouts = G.callouts.filter(c => c.t < 2.2).slice(-2);
-  if (G.flash > 0) G.flash -= dt * 2.2; if (G.shake > 0) G.shake -= dt;
+  if (G.flash > 0) { G.flash -= dt * 2.2; if (G.flash <= 0) G.flashColor = null; }
+  if (G.shake > 0) G.shake -= dt;
+  // nudge / tilt decay
+  if (G.tiltT > 0) { G.tiltT -= dt; if (G.tiltT <= 0) { G.tiltWarning = false; } }
+  G.nudgeOffX *= Math.pow(0.02, dt); if (Math.abs(G.nudgeOffX) < 0.01) G.nudgeOffX = 0;
+  G.nudgeOffZ *= Math.pow(0.02, dt); if (Math.abs(G.nudgeOffZ) < 0.01) G.nudgeOffZ = 0;
+  // light show decay
+  if (G.lightShowT > 0) G.lightShowT -= dt;
+  if (G.rainbowT > 0) G.rainbowT -= dt;
+  // DMD message update
+  if (G.dmdMsg) { G.dmdT += dt; if (G.dmdT >= G.dmdMsg.dur) { G.dmdMsg = G.dmdQueue.shift() || null; G.dmdT = 0; } }
+  // match animation
+  if (G.matchPhase === 'spin') { G.matchT += dt; G.matchDigit = Math.floor(G.matchT * 12) % 100; if (G.matchT > 2.5) { G.matchDigit = G.matchTarget; G.matchPhase = 'reveal'; G.matchT = 0; } }
+  else if (G.matchPhase === 'reveal') { G.matchT += dt; if (G.matchT > 0.5 && !G.matchWin && (G.score % 100) === G.matchTarget) { G.matchWin = true; } if (G.matchT > 2) { if (G.matchWin && !G.replay) { G.replay = true; replayGame(); } G.matchPhase = 'done'; G.matchT = 0; } }
   if (G.disp) { G.disp.t += dt; if (G.disp.t > G.disp.dur) G.disp = G.dispQ.shift() || null; }
   const decay = (arr, k) => { for (let i = 0; i < arr.length; i++) arr[i] = Math.max(0, arr[i] - dt * k); };
   decay(G.bumperFlash, 4); decay(G.laneFlash, 2); decay(G.slingFlash, 5); decay(G.targetFlash, 2); decay(G.rampFlash, 1.2);
@@ -651,6 +728,7 @@ function goFull() {
 }
 function waitingToPlunge() { return G.phase === 'play' && !G.intro && !G.multiball && G.balls.length >= 1 && G.balls.some(b => b.state === 'lane' && !b.auto) && activeBalls().length === 1; }
 function setFlipper(side, on) {
+  if (G.tiltT > 0) { FLIPPERS.filter(f => f.side === side).forEach(f => f.pressed = false); return; }
   const fl = FLIPPERS.filter(f => f.side === side);
   const was = fl[0].pressed;
   fl.forEach(f => f.pressed = on);
@@ -734,6 +812,7 @@ addEventListener('keydown', e => {
     if (isLeft) { e.preventDefault(); setFlipper(0, true); return; }
     if (isRight) { e.preventDefault(); setFlipper(1, true); return; }
     if (PLUNGE_KEYS.includes(e.key)) { e.preventDefault(); if (!e.repeat) plungeDown(); return; }
+    if ((e.key === 'n' || e.key === 'N') && !e.repeat) { e.preventDefault(); nudge(G.t % 0.5 < 0.25 ? -1 : 1); return; }
   }
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!e.repeat) confirm(); return; }
   if (e.key === 'p' || e.key === 'P') togglePause();
@@ -1819,10 +1898,14 @@ function updateCamera(R, dt, t, attract) {
   _camP2.lerpVectors(prevP, _camP, Math.min(1, dt * 8)); _camL2.lerpVectors(prevL, _camL, Math.min(1, dt * 8));
   R.camPrevP = _camP2.clone(); R.camPrevL = _camL2.clone();
   const sh = G.shake > 0 ? G.shake : 0;
-  camera.position.set(_camP2.x + R.camX + (Math.random() - 0.5) * sh, _camP2.y + (Math.random() - 0.5) * sh, _camP2.z + driftZ);
+  camera.position.set(_camP2.x + R.camX + (Math.random() - 0.5) * sh + G.nudgeOffX, _camP2.y + (Math.random() - 0.5) * sh, _camP2.z + driftZ + G.nudgeOffZ);
   camera.lookAt(_camL2.x + R.camX, _camL2.y, _camL2.z + driftZ);
 }
 const smooth01 = (x) => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+function hslToRGB(h, s, l) {
+  const a = s * Math.min(l, 1 - l), f = n => { const k = (n + h * 12) % 12; return Math.round((l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))) * 255); };
+  return [f(0), f(8), f(4)];
+}
 function updateScene(dt) {
   const R = R3; if (!R) return;
   const t = G.t, attract = G.state === 'title';
@@ -1851,10 +1934,15 @@ function updateScene(dt) {
   // bumpers
   R.bumpers.forEach((bm, i) => {
     const f = G.bumperFlash[i], siz = G.sizzleT > 0;
-    bm.capMat.emissiveIntensity = 0.5 + f * 3 + (attract ? 0.6 * (blink(3) === (i % 2 === 0)) : 0) + (siz ? 0.8 + 0.6 * Math.sin(t * 12 + i) : 0);
-    bm.capMat.emissive.set(siz ? 0xff6a1a : 0xff2f8a);
+    let emI = 0.5 + f * 3 + (attract ? 0.6 * (blink(3) === (i % 2 === 0)) : 0) + (siz ? 0.8 + 0.6 * Math.sin(t * 12 + i) : 0);
+    let emC = siz ? 0xff6a1a : 0xff2f8a;
+    // light show override: mode completion = cycle colors, rainbow = hue cycle
+    if (G.lightShowT > 0) { emI = Math.max(emI, 2 + 2 * Math.sin(t * 16 + i * 2.1)); emC = parseInt(G.lightShowColor ? G.lightShowColor.slice(1) : 'ff6fb5', 16); }
+    if (G.rainbowT > 0) { const hue = (t * 3 + i / 3) % 1; const rgb = hslToRGB(hue, 1, 0.55); emC = (rgb[0] << 16) | (rgb[1] << 8) | rgb[2]; emI = Math.max(emI, 2.5 + Math.sin(t * 12) * 1.5); }
+    bm.capMat.emissiveIntensity = emI;
+    bm.capMat.emissive.set(emC);
     bm.ring.position.y = 1.0 - f * 0.6;
-    R.sprites.bumpers[i].material.opacity = 0.15 + f * 0.9 + (siz ? 0.3 : 0);
+    R.sprites.bumpers[i].material.opacity = 0.15 + f * 0.9 + (siz ? 0.3 : 0) + (G.lightShowT > 0 || G.rainbowT > 0 ? 0.4 : 0);
   });
   R.slings.forEach((m, i) => { m.emissiveIntensity = 0.35 + G.slingFlash[i] * 3; R.sprites.slings[i].material.opacity = 0.1 + G.slingFlash[i] * 0.9; });
   // grill toy
@@ -2242,7 +2330,15 @@ function drawPops() {
 function drawUI() {
   ctx.setTransform(uiScale, 0, 0, uiScale, 0, 0);
   ctx.clearRect(0, 0, UW, UH);
-  if (G.flash > 0) { ctx.fillStyle = `rgba(255,240,250,${Math.min(0.45, G.flash * 0.35)})`; ctx.fillRect(0, 0, UW, UH); }
+  if (G.flash > 0) {
+    if (G.flashColor) {
+      const r = parseInt(G.flashColor.slice(1, 3), 16), g = parseInt(G.flashColor.slice(3, 5), 16), b = parseInt(G.flashColor.slice(5, 7), 16);
+      ctx.fillStyle = `rgba(${r},${g},${b},${Math.min(0.5, G.flash * 0.4)})`;
+    } else {
+      ctx.fillStyle = `rgba(255,240,250,${Math.min(0.45, G.flash * 0.35)})`;
+    }
+    ctx.fillRect(0, 0, UW, UH);
+  }
   if (G.state === 'play' || G.state === 'paused') { drawPops(); drawCallouts(); }
   if (G.state === 'play' && !G.intro && G.balls.some(b => b.state === 'lane' && !b.auto) && waitingToPlunge()) {
     const k = G.plunger; ctx.save(); ctx.globalAlpha = 0.85;
