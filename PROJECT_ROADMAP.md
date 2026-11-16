@@ -1,7 +1,7 @@
 # Jones Ridge Arcade — Roadmap & Handoff
 
 **Last saved:** November 16, 2026 (Claude session)
-**Status:** All 9 games are in the arcade. Art polish is done for 5 of 6 games; **only Pinball is left**. Nothing is pushed yet.
+**Status:** All 9 games are in the arcade, and art polish is done for 5 of 6 games; **only Pinball is left**. Everything so far is pushed to `origin/main`, so it is live on Cloudflare Pages once the deploy workflow finishes.
 **Repository:** `/home/j03jones/Documents/jones-ridge-arcade` (all live files are in `site/`)
 
 ---
@@ -10,7 +10,7 @@
 
 1. **Pinball art polish** (`site/pinball/game.js`, the last item in Task 2 below).
 2. Optional: **update the Chomper lobby card** in `site/index.html`. It still shows a yellow Pac-Man-style wedge; the game and icon now use a lattice-crust pie with a chef's hat.
-3. **Deploy:** `git push origin main`. This runs `.github/workflows/deploy.yml` and publishes `site/` to Cloudflare Pages. `main` is several commits ahead of `origin/main`.
+3. **Deploy after further changes:** `git push origin main`. This runs `.github/workflows/deploy.yml` and publishes `site/` to Cloudflare Pages. Everything up to the Nova polish has been pushed.
 
 **How the work has been tested:** a local server (`python3 -m http.server 8787 --directory site`, saved as the `arcade` entry in `.claude/launch.json`) and the in-app browser at phone size (about 480×820).
 - The browser pane is often hidden, which pauses `requestAnimationFrame`. Each game was tested by temporarily adding a `window.__x = { G, step(n) {...} }` hook at the end of its script, stepping the simulation by hand, cropping and magnifying the canvas, then **removing the hook**.
@@ -45,7 +45,8 @@
 - `site/icons/{drift,chomp,stack}-{180,192,512}.png`, rendered from SVG with Playwright's headless Chromium (`~/.cache/ms-playwright/chromium_headless_shell-1254/...`) and resized with PIL.
 
 ### Task 4 — Deployment
-- [ ] `git push origin main` once Pinball is done (or sooner, if you want the current state live).
+- [x] Pushed to `origin/main` on 2026-11-16: Turbo Drift, icons, and the polish for 5 games.
+- [ ] Push again once Pinball is done.
 
 ---
 
