@@ -140,7 +140,7 @@
 <div class="bar" aria-hidden="true">
   <div><div class="lbl">1UP</div><div class="val">00</div></div>
   <div class="mid"><div class="lbl">HI-SCORE</div><span class="val" id="hiBar">-------</span></div>
-  <div class="right"><div class="lbl">GAMES</div><div class="val">08</div></div>
+  <div class="right"><div class="lbl">GAMES</div><div class="val">09</div></div>
 </div>
 
 <header class="marquee">
@@ -401,6 +401,53 @@
       <div class="name">STACK HOUSE</div>
       <div class="desc">Time your taps to stack the perfect burger — each layer slides faster than the last!</div>
       <div class="top" data-game="stack"></div>
+      <span class="play"><span class="arrow">&#9654;</span> PLAY</span>
+    </div>
+  </a>
+  <a class="card" href="/drift/">
+    <div class="screen"><svg class="art" viewBox="0 0 320 200" aria-hidden="true">
+      <defs>
+        <linearGradient id="drbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0f1e"/><stop offset="1" stop-color="#14261c"/></linearGradient>
+        <radialGradient id="drlamp"><stop offset="0" stop-color="#ffd68c" stop-opacity=".35"/><stop offset="1" stop-color="#ffd68c" stop-opacity="0"/></radialGradient>
+        <linearGradient id="drbeam" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff0be" stop-opacity=".45"/><stop offset="1" stop-color="#fff0be" stop-opacity="0"/></linearGradient>
+      </defs>
+      <rect width="320" height="200" fill="url(#drbg)"/>
+      <!-- winding road -->
+      <path d="M40 210 C40 140 250 120 230 60 C220 25 170 10 175 -10" fill="none" stroke="#3a3836" stroke-width="104"/>
+      <path d="M40 210 C40 140 250 120 230 60 C220 25 170 10 175 -10" fill="none" stroke="#f2f2f2" stroke-width="92" stroke-dasharray="8 8"/>
+      <path d="M40 210 C40 140 250 120 230 60 C220 25 170 10 175 -10" fill="none" stroke="#272834" stroke-width="84"/>
+      <path d="M40 210 C40 140 250 120 230 60 C220 25 170 10 175 -10" fill="none" stroke="#ffd84a" stroke-width="3" stroke-dasharray="12 10"/>
+      <circle cx="268" cy="150" r="60" fill="url(#drlamp)"/>
+      <!-- skid marks -->
+      <path d="M70 190 C80 160 120 150 140 140" fill="none" stroke="#08080c" stroke-opacity=".6" stroke-width="4"/>
+      <path d="M86 196 C96 166 134 158 152 150" fill="none" stroke="#08080c" stroke-opacity=".6" stroke-width="4"/>
+      <!-- drop zone -->
+      <circle cx="222" cy="52" r="20" fill="#2a7850" fill-opacity=".35" stroke="#5cff9d" stroke-width="3" stroke-dasharray="7 5"/>
+      <!-- hot rod, sliding -->
+      <g transform="translate(160 122) rotate(58)">
+        <path d="M-9 -26 L-40 -120 L22 -120 L9 -26Z" fill="url(#drbeam)"/>
+        <rect x="-18" y="-18" width="7" height="13" rx="2" fill="#0c0c10"/><rect x="11" y="-18" width="7" height="13" rx="2" fill="#0c0c10"/>
+        <rect x="-18" y="12" width="7" height="13" rx="2" fill="#0c0c10"/><rect x="11" y="12" width="7" height="13" rx="2" fill="#0c0c10"/>
+        <rect x="-15" y="-28" width="30" height="56" rx="10" fill="#e8322e"/>
+        <rect x="-5" y="-27" width="3" height="14" fill="#fff"/><rect x="2" y="-27" width="3" height="14" fill="#fff"/>
+        <path d="M-12 -12 L12 -12 L10 -4 L-10 -4Z" fill="#1a2650"/>
+        <rect x="-11" y="-5" width="22" height="15" rx="4" fill="#f4f0e8"/>
+        <rect x="-7" y="-2" width="14" height="9" rx="3" fill="#ffd84a"/>
+        <circle cx="-9" cy="-26" r="3" fill="#fffbe0"/><circle cx="9" cy="-26" r="3" fill="#fffbe0"/>
+      </g>
+      <!-- smoke -->
+      <g fill="#cdd" fill-opacity=".35"><circle cx="118" cy="150" r="10"/><circle cx="102" cy="162" r="13"/><circle cx="84" cy="176" r="15"/></g>
+      <!-- traffic -->
+      <g transform="translate(236 92) rotate(-15)"><rect x="-14" y="-26" width="28" height="52" rx="8" fill="#3a7bd5"/><path d="M-11 -10 L11 -10 L9 -3 L-9 -3Z" fill="#1a2650"/><rect x="-10" y="-3" width="20" height="13" rx="3" fill="#6aa0f0"/></g>
+      <!-- neon sign -->
+      <rect x="18" y="20" width="70" height="28" rx="6" fill="#16122a" stroke="#ff4fb0" stroke-width="2"/>
+      <text x="53" y="40" fill="#fff" font-family="system-ui,sans-serif" font-size="16" font-weight="900" font-style="italic" text-anchor="middle">DINER</text>
+    </svg></div>
+    <div class="info">
+      <div class="slot">GAME 09</div>
+      <div class="name">TURBO DRIFT</div>
+      <div class="desc">Slide the diner&rsquo;s hot rod through winding night roads and deliver the orders before they go cold.</div>
+      <div class="top" data-game="drift"></div>
       <span class="play"><span class="arrow">&#9654;</span> PLAY</span>
     </div>
   </a>
