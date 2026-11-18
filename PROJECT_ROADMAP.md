@@ -56,6 +56,6 @@
 ---
 
 ## Repository notes
-- Cloudflare Pages deploys `site/`. The `jones-ridge-arcade/` subfolder is an old staging leftover; don't edit it.
+- Cloudflare Pages deploys `site/`.
 - Each game is a self-contained page; all art is drawn in code and all sound is synthesized.
 - Every game also keeps a top 10 on the device (`<game>.top10` in localStorage) as a fallback for the online scoreboard.
